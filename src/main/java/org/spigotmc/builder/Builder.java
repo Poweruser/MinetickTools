@@ -60,7 +60,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 public class Builder
 {
 
-    public static final String LOG_FILE = "BuildTools.log.txt";
+    public static final String LOG_FILE = "MinetickTools.log.txt";
     public static final boolean IS_WINDOWS = System.getProperty( "os.name" ).startsWith( "Windows" );
     public static final File CWD = new File( "." );
     private static boolean dontUpdate;
@@ -159,10 +159,10 @@ public class Builder
             clone( "https://hub.spigotmc.org/stash/scm/spigot/craftbukkit.git", craftBukkit );
         }
 
-        File spigot = new File( "Spigot" );
-        if ( !spigot.exists() )
+        File minetick = new File( "Minetick" );
+        if ( !minetick.exists() )
         {
-            clone( "https://hub.spigotmc.org/stash/scm/spigot/spigot.git", spigot );
+            clone( "https://github.com/Poweruser/Minetick.git", minetick );
         }
 
         File buildData = new File( "BuildData" );
@@ -193,7 +193,7 @@ public class Builder
 
         Git bukkitGit = Git.open( bukkit );
         Git craftBukkitGit = Git.open( craftBukkit );
-        Git spigotGit = Git.open( spigot );
+        Git minetickGit = Git.open( minetick );
         Git buildGit = Git.open( buildData );
 
         BuildInfo buildInfo = new BuildInfo( "Dev Build", "Development", 0, new BuildInfo.Refs( "master", "master", "master", "master" ) );
@@ -208,7 +208,7 @@ public class Builder
                 String verInfo;
                 try
                 {
-                    verInfo = get( "https://hub.spigotmc.org/versions/" + askedVersion + ".json" );
+                    verInfo = get( "https://github.com/Poweruser/Minetick/wiki/versions/" + askedVersion + ".json" );
                 } catch ( IOException ex )
                 {
                     System.err.println( "Could not get version " + askedVersion + " does it exist? Try another version or use 'latest'" );
@@ -230,7 +230,7 @@ public class Builder
             pull( buildGit, buildInfo.getRefs().getBuildData() );
             pull( bukkitGit, buildInfo.getRefs().getBukkit() );
             pull( craftBukkitGit, buildInfo.getRefs().getCraftBukkit() );
-            pull( spigotGit, buildInfo.getRefs().getSpigot() );
+            pull( minetickGit, buildInfo.getRefs().getMinetick() );
         }
 
         VersionInfo versionInfo = new Gson().fromJson(
@@ -360,15 +360,15 @@ public class Builder
 
         FileUtils.moveDirectory( tmpNms, nmsDir );
 
-        File spigotApi = new File( spigot, "Bukkit" );
-        if ( !spigotApi.exists() )
+        File minetickApi = new File( minetick, "Bukkit" );
+        if ( !minetickApi.exists() )
         {
-            clone( "file://" + bukkit.getAbsolutePath(), spigotApi );
+            clone( "file://" + bukkit.getAbsolutePath(), minetickApi );
         }
-        File spigotServer = new File( spigot, "CraftBukkit" );
-        if ( !spigotServer.exists() )
+        File minetickServer = new File( minetick, "CraftBukkit" );
+        if ( !minetickServer.exists() )
         {
-            clone( "file://" + craftBukkit.getAbsolutePath(), spigotServer );
+            clone( "file://" + craftBukkit.getAbsolutePath(), minetickServer );
         }
 
         // Git spigotApiGit = Git.open( spigotApi );
@@ -392,17 +392,17 @@ public class Builder
 
         try
         {
-            runProcess( spigot, "bash", "applyPatches.sh" );
-            System.out.println( "*** Spigot patches applied!" );
+            runProcess( minetick, "bash", "applyPatches.sh" );
+            System.out.println( "*** Minetick patches applied!" );
 
             if ( !skipCompile )
             {
-                System.out.println( "Compiling Spigot & Spigot-API" );
-                runProcess( spigot, "sh", mvn, "clean", "install" );
+                System.out.println( "Compiling Minetick & Minetick-API" );
+                runProcess( minetick, "sh", mvn, "clean", "install" );
             }
         } catch ( Exception ex )
         {
-            System.err.println( "Error compiling Spigot, are you running this jar via msysgit?" );
+            System.err.println( "Error compiling Minetick, are you running this jar via msysgit?" );
             ex.printStackTrace();
             System.exit( 1 );
         }
@@ -416,7 +416,7 @@ public class Builder
         {
             System.out.println( "Success! Everything compiled successfully. Copying final .jar files now." );
             copyJar( "CraftBukkit/target", "craftbukkit", "craftbukkit-" + versionInfo.getMinecraftVersion() + ".jar" );
-            copyJar( "Spigot/Spigot-Server/target", "spigot", "spigot-" + versionInfo.getMinecraftVersion() + ".jar" );
+            copyJar( "Minetick/MinetickMod/target", "minetick", "minetick-" + versionInfo.getMinecraftVersion() + ".jar" );
         }
     }
 
@@ -622,7 +622,7 @@ public class Builder
                     @Override
                     public java.security.cert.X509Certificate[] getAcceptedIssuers()
                     {
-                        return null;
+                        return new X509Certificate[0];
                     }
 
                     @Override
@@ -638,7 +638,7 @@ public class Builder
             };
 
             // Trust SSL certs
-            SSLContext sc = SSLContext.getInstance( "SSL" );
+            SSLContext sc = SSLContext.getInstance( "TLS" );
             sc.init( null, trustAllCerts, new SecureRandom() );
             HttpsURLConnection.setDefaultSSLSocketFactory( sc.getSocketFactory() );
 
